@@ -1,4 +1,4 @@
-package co.com.computingsoftdev.cortexpos_api;
+package co.com.computingsoftdev.cortexpos.api;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

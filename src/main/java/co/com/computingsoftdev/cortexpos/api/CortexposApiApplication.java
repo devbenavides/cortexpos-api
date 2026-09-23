@@ -1,4 +1,4 @@
-package co.com.computingsoftdev.cortexpos_api;
+package co.com.computingsoftdev.cortexpos.api;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
