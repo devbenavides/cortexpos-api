@@ -1,4 +1,4 @@
-version: '3.9'
+#version: '3.9'
 
 services:
   db:
@@ -14,20 +14,20 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
-  backend:
-    build: .
-    container_name: cortexpos_backend_api
-    restart: always
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
+  #backend:
+    #build: .
+    #container_name: cortexpos_backend_api
+    #restart: always
+    #environment:
+    #  SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+    #  SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+    #  SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+    #  JWT_SECRET: ${JWT_SECRET}
+    #  JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+   # ports:
+     # - "8080:8080"
+    #depends_on:
+    #  - db
 
 volumes:
   db_data:

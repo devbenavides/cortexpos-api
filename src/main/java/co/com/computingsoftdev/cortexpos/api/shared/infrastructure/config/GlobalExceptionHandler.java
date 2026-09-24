@@ -3,6 +3,8 @@ package co.com.computingsoftdev.cortexpos.api.shared.infrastructure.config;
 import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.ApiError;
 import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.DuplicateDocumentNumberException;
 import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.NotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -27,6 +29,20 @@ public class GlobalExceptionHandler {
                         DefaultMessageSourceResolvable::getDefaultMessage,
                         (msg1, msg2) -> msg1
                 ));
+        return buildValidationError(HttpStatus.BAD_REQUEST, "Existen errores en los campos enviados.", fieldErrors);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleConstraintViolation(ConstraintViolationException ex) {
+        Map<String, String> fieldErrors = ex.getConstraintViolations()
+                .stream()
+                .collect(Collectors.toMap(
+                        v -> v.getPropertyPath().toString(),
+                        ConstraintViolation::getMessage,
+                        (msg1, msg2) -> msg1
+                ));
+
         return buildValidationError(HttpStatus.BAD_REQUEST, "Existen errores en los campos enviados.", fieldErrors);
     }
 

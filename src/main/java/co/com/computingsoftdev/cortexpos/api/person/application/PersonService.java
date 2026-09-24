@@ -14,8 +14,8 @@ public class PersonService implements CreatePersonUseCase {
 
     @Override
     public Person create(Person person) {
-        if (personRepositoryPort.existsByDocumentNumber(person.getDocumentNumber())){
-            throw new DuplicateDocumentNumberException("Ya existe una persona registrada con ese número de documento.");
+        if (personRepositoryPort.existsByDocumentNumber(person.getDocumentNumber())) {
+            throw new DuplicateDocumentNumberException("Ya existe una persona registrada con ese número de documento." + person.getDocumentNumber());
         }
         return personRepositoryPort.save(person);
     }
