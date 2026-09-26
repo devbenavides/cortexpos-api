@@ -5,6 +5,7 @@ import co.com.computingsoftdev.cortexpos.api.person.domain.ports.out.PersonRepos
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 @Component
@@ -19,6 +20,11 @@ public class PersonPersistenceAdapter implements PersonRepositoryPort {
         PersonJpaEntity entity = mapper.toEntity(person);
         PersonJpaEntity savedEntity = repository.save(entity);
         return mapper.toDomain(savedEntity);
+    }
+
+    @Override
+    public List<Person> findAll() {
+        return mapper.toDomainList(repository.findAll());
     }
 
     @Override

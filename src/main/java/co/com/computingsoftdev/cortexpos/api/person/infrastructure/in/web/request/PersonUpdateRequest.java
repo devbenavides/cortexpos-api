@@ -3,7 +3,7 @@ package co.com.computingsoftdev.cortexpos.api.person.infrastructure.in.web.reque
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record PersonCreateRequest(
+public record PersonUpdateRequest(
         @NotBlank(message = "El nombre es obligatorio")
         @Size(max = 100)
         String firstName,
@@ -18,6 +18,7 @@ public record PersonCreateRequest(
         @NotBlank(message = "El número de documento es obligatorio")
         @Size(max = 50)
         String documentNumber,
+
         @Size(max = 50)
         String phone,
 
