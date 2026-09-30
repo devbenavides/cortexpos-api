@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class PersonPersistenceAdapter implements PersonRepositoryPort {
@@ -45,5 +46,15 @@ public class PersonPersistenceAdapter implements PersonRepositoryPort {
     @Override
     public boolean existsByDocumentNumber(String documentNumber) {
         return repository.existsByDocumentNumber(documentNumber);
+    }
+
+    @Override
+    public boolean existsByUuid(UUID uuid) {
+        return repository.existsByUuid(uuid);
+    }
+
+    @Override
+    public void deleteByUuid(UUID uuid) {
+        repository.deleteByUuid(uuid);
     }
 }

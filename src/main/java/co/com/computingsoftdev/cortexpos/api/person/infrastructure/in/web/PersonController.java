@@ -1,10 +1,7 @@
 package co.com.computingsoftdev.cortexpos.api.person.infrastructure.in.web;
 
 import co.com.computingsoftdev.cortexpos.api.person.domain.model.Person;
-import co.com.computingsoftdev.cortexpos.api.person.domain.ports.in.CreatePersonUseCase;
-import co.com.computingsoftdev.cortexpos.api.person.domain.ports.in.GetAllPersonUseCase;
-import co.com.computingsoftdev.cortexpos.api.person.domain.ports.in.GetPersonByUuidUseCase;
-import co.com.computingsoftdev.cortexpos.api.person.domain.ports.in.UpdatePersonUseCase;
+import co.com.computingsoftdev.cortexpos.api.person.domain.ports.in.*;
 import co.com.computingsoftdev.cortexpos.api.person.infrastructure.in.web.request.PersonCreateRequest;
 import co.com.computingsoftdev.cortexpos.api.person.infrastructure.in.web.request.PersonUpdateRequest;
 import co.com.computingsoftdev.cortexpos.api.person.infrastructure.in.web.response.PersonResponse;
@@ -26,6 +23,7 @@ public class PersonController {
     private final GetAllPersonUseCase getAllPersonUseCase;
     private final GetPersonByUuidUseCase getPersonByUuidUseCase;
     private final UpdatePersonUseCase updatePersonUseCase;
+    private final DeletePersonUseCase deletePersonUseCase;
 
     private final PersonWebMapper webMapper;
     private final ObjectsValidator validator;
@@ -68,4 +66,9 @@ public class PersonController {
         return ResponseEntity.ok(webMapper.toResponse(updatePerson));
     }
 
+    @DeleteMapping("/{uuid}")
+    public ResponseEntity<Void> delete(@PathVariable UUID uuid) {
+        deletePersonUseCase.delete(uuid);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -9,4 +9,6 @@ public interface SpringDataPersonRepository extends JpaRepository<PersonJpaEntit
     Optional<PersonJpaEntity> findByUuid(UUID uuid);
     Optional<PersonJpaEntity> findByDocumentNumber(String documentNumber);
     boolean existsByDocumentNumber(String documentNumber);
+    boolean existsByUuid(UUID uuid);
+    void deleteByUuid(UUID uuid);
 }
