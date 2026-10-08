@@ -2,7 +2,9 @@ package co.com.computingsoftdev.cortexpos.api.shared.infrastructure.config;
 
 import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.ApiError;
 import co.com.computingsoftdev.cortexpos.api.person.domain.exception.DuplicateDocumentNumberException;
+import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.ForbiddenException;
 import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.NotFoundException;
+import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.UnauthorizedException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -87,6 +89,17 @@ public class GlobalExceptionHandler {
                 "Ha ocurrido un error interno e inesperado en el servidor.", "internal_error");
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiError handleForbidden(ForbiddenException ex){
+        return buildBusinessError(HttpStatus.FORBIDDEN,ex.getMessage(), "forbidden");
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiError handleUnauthorized(UnauthorizedException ex){
+        return buildBusinessError(HttpStatus.FORBIDDEN,ex.getMessage(), "unauthorized");
+    }
 
     private ApiError buildValidationError(HttpStatus status, String message, Map<String, String> fieldErrors) {
         ApiError error = new ApiError();
