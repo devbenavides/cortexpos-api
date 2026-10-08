@@ -1,122 +1,137 @@
 package co.com.computingsoftdev.cortexpos.api.shared.infrastructure.config;
 
-import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.ApiError;
-import co.com.computingsoftdev.cortexpos.api.person.domain.exception.DuplicateDocumentNumberException;
-import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.ForbiddenException;
-import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.NotFoundException;
-import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.UnauthorizedException;
-import jakarta.validation.ConstraintViolation;
+import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.*;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.nio.file.AccessDeniedException;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 1. Validaciones de DTOs en Controllers (@Valid @RequestBody)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors()
-                .stream()
-                .collect(Collectors.toMap(
-                        FieldError::getField,
-                        DefaultMessageSourceResolvable::getDefaultMessage,
-                        (msg1, msg2) -> msg1
-                ));
-        return buildValidationError(HttpStatus.BAD_REQUEST, "Existen errores en los campos enviados.", fieldErrors);
-    }
+    /*@ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiError> handleNotFound(NotFoundException ex, HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, ex.code(), ex.getMessage(), req, null);
+    }*/
 
-    // 2. Validaciones en parámetros de la URL / Query params (@Validated @PathVariable / @RequestParam)
-    @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleConstraintViolation(ConstraintViolationException ex) {
-        Map<String, String> fieldErrors = ex.getConstraintViolations()
-                .stream()
-                .collect(Collectors.toMap(
-                        v -> v.getPropertyPath().toString(),
-                        ConstraintViolation::getMessage,
-                        (msg1, msg2) -> msg1
-                ));
-
-        return buildValidationError(HttpStatus.BAD_REQUEST, "Existen errores en los campos enviados.", fieldErrors);
-    }
-
-    // 3. JSON mal formado o tipos de datos inválidos en el Body
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        return buildBusinessError(HttpStatus.BAD_REQUEST, "El cuerpo de la petición (JSON) está mal formado o contiene tipos de datos inválidos.", "malformed_json");
-    }
-
-    // 4. Recursos no encontrados (404)
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiError handleNotFound(NotFoundException ex){
-        return buildBusinessError(HttpStatus.NOT_FOUND,ex.getMessage(), "notFound");
-    }
-
-    // 5. Excepciones de negocio personalizadas (409)
-    @ExceptionHandler(DuplicateDocumentNumberException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleDuplicateDocumentNumber(DuplicateDocumentNumberException ex) {
-        return buildBusinessError(HttpStatus.CONFLICT, ex.getMessage(), "conflict");
-    }
-
-    // 6. Violación de restricciones de Base de Datos (409) - Ej. llaves duplicadas a nivel BD
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-        return buildBusinessError(HttpStatus.CONFLICT, "El registro ya existe o viola una restricción de integridad en la base de datos.", "data_integrity_violation");
-    }
-
-    // 7. Red de seguridad final para cualquier error no controlado (500)
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleGenericException(Exception ex) {
-        return buildBusinessError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Ha ocurrido un error interno e inesperado en el servidor.", "internal_error");
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleConflict(ConflictException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.code(), ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ApiError handleForbidden(ForbiddenException ex){
-        return buildBusinessError(HttpStatus.FORBIDDEN,ex.getMessage(), "forbidden");
+    public ResponseEntity<ApiError> handleForbidden(ForbiddenException ex, HttpServletRequest req) {
+        return build(HttpStatus.FORBIDDEN, ex.code(), ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ApiError handleUnauthorized(UnauthorizedException ex){
-        return buildBusinessError(HttpStatus.FORBIDDEN,ex.getMessage(), "unauthorized");
+    public ResponseEntity<ApiError> handleUnauthorized(UnauthorizedException ex, HttpServletRequest req) {
+        return build(HttpStatus.UNAUTHORIZED, ex.code(), ex.getMessage(), req, null);
     }
 
-    private ApiError buildValidationError(HttpStatus status, String message, Map<String, String> fieldErrors) {
-        ApiError error = new ApiError();
-        error.setStatus(status.value());
-        error.setError(status.getReasonPhrase());
-        error.setType("validation");
-        error.setMessage(message);
-        error.setFieldErrors(fieldErrors);
-        return error;
+    // ---------- Validaciones ----------
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(fe -> fieldErrors.putIfAbsent(fe.getField(), fe.getDefaultMessage()));
+        // Errores entre campos (ej. "fecha fin posterior a fecha inicio")
+        ex.getBindingResult().getGlobalErrors()
+                .forEach(ge -> fieldErrors.putIfAbsent("_form", ge.getDefaultMessage()));
+
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
+                "Existen errores en los campos enviados.", req, fieldErrors);
     }
 
-    private ApiError buildBusinessError(HttpStatus status, String message, String type) {
-        ApiError error = new ApiError();
-        error.setStatus(status.value());
-        error.setError(status.getReasonPhrase());
-        error.setType(type);
-        error.setMessage(message);
-        return error;
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest req) {
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getConstraintViolations().forEach(v -> {
+            String path = v.getPropertyPath().toString();          // "create.arg0.name" -> "name"
+            fieldErrors.putIfAbsent(path.substring(path.lastIndexOf('.') + 1), v.getMessage());
+        });
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR",
+                "Existen errores en los campos enviados.", req, fieldErrors);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleNotReadable(HttpMessageNotReadableException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "MALFORMED_JSON",
+                "El cuerpo de la petición (JSON) está mal formado o contiene tipos de datos inválidos.", req, null);
+    }
+
+    /** Ej. GET /locations/abc cuando se esperaba un UUID. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "INVALID_PARAMETER",
+                "El parámetro '%s' tiene un valor inválido.".formatted(ex.getName()), req, null);
+    }
+
+    // ---------- Seguridad ----------
+
+    /** Lanzada por @PreAuthorize. Sin este handler, el catch-all la convertiría en un 500. */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex, HttpServletRequest req) {
+        return build(HttpStatus.FORBIDDEN, "ACCESS_DENIED",
+                "No tienes permiso para realizar esta operación.", req, null);
+    }
+
+    // ---------- HTTP genérico ----------
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleNoResource(ResourceNotFoundException ex, HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, "ROUTE_NOT_FOUND", "La ruta solicitada no existe.", req, null);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
+                                                             HttpServletRequest req) {
+        return build(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED",
+                "Método HTTP no permitido para esta ruta.", req, null);
+    }
+
+    // ---------- Base de datos ----------
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest req) {
+        log.warn("Violación de integridad en {}: {}", req.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        return build(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION",
+                "El registro ya existe o viola una restricción de integridad en la base de datos.", req, null);
+    }
+
+    // ---------- Red de seguridad ----------
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest req) {
+        log.error("Error no controlado en {} {}", req.getMethod(), req.getRequestURI(), ex);   // <- no lo pierdas
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
+                "Ha ocurrido un error interno e inesperado en el servidor.", req, null);
+    }
+    // ---------- Helper único: status y cuerpo nunca se desincronizan ----------
+
+    private ResponseEntity<ApiError> build(HttpStatus status, String code, String message,
+                                           HttpServletRequest req, Map<String, String> fieldErrors) {
+        ApiError body = ApiError.builder()
+                .status(status.value())
+                .code(code)
+                .message(message)
+                .path(req.getRequestURI())
+                .details(fieldErrors)
+                .build();
+        return ResponseEntity.status(status).body(body);
     }
 }

@@ -1,23 +1,22 @@
 package co.com.computingsoftdev.cortexpos.api.shared.domain.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiError {
     @Builder.Default
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime timestamp = LocalDateTime.now();
-    private int status;
-    private String error;
-    private String type;
-    private String message;
-    private Map<String, String> fieldErrors;
+    private final Instant timestamp = Instant.now();
+    private final Number status;
+    private final String code;
+    private final String message;
+    private final String path;
+    private final Map<String, String> details;
 }

@@ -4,7 +4,7 @@ import co.com.computingsoftdev.cortexpos.api.person.domain.model.Person;
 import co.com.computingsoftdev.cortexpos.api.person.domain.ports.in.*;
 import co.com.computingsoftdev.cortexpos.api.person.domain.ports.out.PersonRepositoryPort;
 import co.com.computingsoftdev.cortexpos.api.person.domain.exception.DuplicateDocumentNumberException;
-import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.NotFoundException;
+import co.com.computingsoftdev.cortexpos.api.shared.domain.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class PersonService implements
     @Override
     public Person getByUuid(UUID uuid) {
         return personRepositoryPort.findByUuid(uuid)
-                .orElseThrow(()->new NotFoundException("person "+uuid));
+                .orElseThrow(()->new ResourceNotFoundException("person ", uuid));
     }
 
     @Override
@@ -61,7 +61,7 @@ public class PersonService implements
     @Transactional
     public void delete(UUID uuid) {
         if (!personRepositoryPort.existsByUuid(uuid)) {
-            throw new NotFoundException(" person "+uuid);
+            throw new ResourceNotFoundException(" person ", uuid);
         }
         personRepositoryPort.deleteByUuid(uuid);
     }
